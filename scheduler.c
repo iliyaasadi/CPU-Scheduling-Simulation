@@ -29,6 +29,13 @@ Metrics fcfs_metrics(Process proc[], int n) {
         total_rt += rt[i] ; 
     }
 
+    printf(" FCFS Gantt Chart:\n");
+    for (int i = 0; i < n; i++) {
+    printf("| P%d (%d-%d) ", proc[i].pid, proc[i].startTime, proc[i].completionTime);
+    }
+    printf("|\n");
+    printf("\n");
+
     fcfs_metrics_calculated.avgWaiting = (float) total_wt/n ; 
     fcfs_metrics_calculated.avgTurnaround = (float) total_tat/n ; 
     fcfs_metrics_calculated.avgResponse = (float) total_rt/n ; 
@@ -51,7 +58,7 @@ Metrics sjf_metrics(Process proc[], int n) {
         is_completed[i] = 0 ; 
     }
     
-
+    printf(" SJF Gantt Chart:\n");
     while(temp_n != 0){
         int min_burst = 1e9;
         int temp_index = -1;
@@ -70,6 +77,8 @@ Metrics sjf_metrics(Process proc[], int n) {
             proc[temp_index].completionTime = proc[temp_index].startTime + proc[temp_index].burstTime ; 
             total_time += proc[temp_index].burstTime ; 
             is_completed[temp_index] = 1 ; 
+
+            printf("| P%d (%d-%d) ", proc[temp_index].pid, proc[temp_index].startTime, proc[temp_index].completionTime);
             
 
             wt[temp_index] = proc[temp_index].startTime - proc[temp_index].arrivalTime; 
@@ -84,6 +93,10 @@ Metrics sjf_metrics(Process proc[], int n) {
         }
 
     } 
+
+    printf("|\n");
+    printf("\n");
+
 
     fcfs_metrics_calculated.avgWaiting = (float) total_wt/n ; 
     fcfs_metrics_calculated.avgTurnaround = (float) total_tat/n ; 
@@ -104,7 +117,7 @@ Metrics rr_metrics(Process proc[], int n, int timeQuantum) {
     
     
     int total_wt = 0, total_tat = 0, total_rt = 0;
-    int completed = 0, time = 0;
+    int completed = 0, time = 0, tmp_time_slice = 0 ;
     Metrics fcfs_metrics_calculated  ;
 
     for (int i = 0; i < n; i++) {
@@ -121,13 +134,16 @@ Metrics rr_metrics(Process proc[], int n, int timeQuantum) {
 
     if (rear == 0) {   // shift the time if there was no process 
         time = proc[0].arrivalTime;
+        tmp_time_slice = time ; 
         queue[rear++] = 0;
         visited[0] = 1;
     }
 
+    printf(" RR Gantt Chart:\n");
     while (completed < n) {
         if (front == rear) { // queue is empty, shift the time
             time++;
+            tmp_time_slice++ ; 
             for (int i = 0; i < n; i++) {
                 if (proc[i].arrivalTime <= time && !visited[i]) {
                     queue[rear++] = i;
@@ -144,6 +160,7 @@ Metrics rr_metrics(Process proc[], int n, int timeQuantum) {
         int execTime = (proc[idx].remainingTime > timeQuantum) ? timeQuantum : proc[idx].remainingTime;
         proc[idx].remainingTime -= execTime;
         time += execTime;
+        
 
         for (int i = 0; i < n; i++) {   // new processes added during execution
             if (proc[i].arrivalTime <= time && !visited[i]) {
@@ -155,9 +172,13 @@ Metrics rr_metrics(Process proc[], int n, int timeQuantum) {
 
         if (proc[idx].remainingTime > 0) {
             queue[rear++] = idx; 
+            printf("| P%d (%d-%d) ", proc[idx].pid, tmp_time_slice, time);
+            tmp_time_slice = time ; 
         } 
         else {
             proc[idx].completionTime = time;
+            printf("| P%d (%d-%d) ", proc[idx].pid, tmp_time_slice, proc[idx].completionTime);
+            tmp_time_slice = time ; 
             int tat = proc[idx].completionTime - proc[idx].arrivalTime;
             int wt = tat - proc[idx].burstTime;
             int rt = proc[idx].startTime - proc[idx].arrivalTime;
@@ -169,6 +190,9 @@ Metrics rr_metrics(Process proc[], int n, int timeQuantum) {
             completed++;
         }
     }
+
+    printf("|\n");
+    printf("\n");
 
     fcfs_metrics_calculated.avgWaiting = (float) total_wt/n ; 
     fcfs_metrics_calculated.avgTurnaround = (float) total_tat/n ; 
